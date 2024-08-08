@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import CountTracker from './CountTracker'
 import axios from 'axios'
+import io from 'socket.io-client';
+
 
 const Stock = (props) => {
   const [currentQuantity, setCurrentQuantity] = useState(0)
@@ -12,12 +14,55 @@ const Stock = (props) => {
       return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
     })
   }
+  //buy sell price update portfolio
+
+  // const SocketIo = () => {
+  //   const [messages, setMessages] = useState({
+  //     type: 'buy',
+  //     company: props.company._id,
+  //     volume: currentQuantity,
+  //   });
+  //   const [inputMessage, setInputMessage] = useState('');
+  //   const [socket, setSocket] = useState(null);
+
+  //   useEffect(() => {
+  //     const newSocket = io('http://localhost:3000',
+  //       {
+  //         extraHeaders: {
+  //           Authorization: 'Bearer ' + Cookies.get('jwt'),
+  //         }
+  //       }
+  //     );
+  //     setSocket(newSocket);
+
+  //     newSocket.on('connect', () => {
+  //       console.log('Connected to Socket.IO server');
+  //     });
+
+  //     newSocket.on('message', (message) => {
+  //       console.log('Message from server:', message);
+  //       setMessages((prevMessages) => [...prevMessages, message]);
+  //     });
+
+  //     newSocket.on('disconnect', () => {
+  //       console.log('Socket.IO connection closed');
+  //     });
+
+  //     return () => {
+  //       newSocket.close();
+  //     };
+  //   }, []);
+
+  //   if (socket && inputMessage.trim()) {
+  //     socket.emit('clientMessage', inputMessage);
+  //     setInputMessage('');
+  //   }
+  // };
 
   const buyStock = async () => {
     await axios
       .post(
-        `${
-          import.meta.env.VITE_NEXT_PUBLIC_SERVER_URL
+        `${import.meta.env.VITE_NEXT_PUBLIC_SERVER_URL
         }/stockastic/transaction/`,
         {
           type: 'buy',
@@ -35,7 +80,7 @@ const Stock = (props) => {
           return
         }
 
-      console.log(props.showSnackbar)
+        console.log(props.showSnackbar)
 
         props.showSnackbar(
           `You bought ${currentQuantity} stock(s) of ${props.company.name}`,
@@ -61,6 +106,7 @@ const Stock = (props) => {
   }
 
   const handleBuy = () => {
+    SocketIo()
     buyStock()
     buyBtn.disabled = true
     setTimeout(() => {

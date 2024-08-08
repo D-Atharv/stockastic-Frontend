@@ -5,7 +5,7 @@ import axios from 'redaxios'
 import { useNavigate } from 'react-router'
 import { Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet'
-
+import Cookies from 'js-cookie'
 function SignIn() {
   const navigate = useNavigate()
 
@@ -35,7 +35,7 @@ function SignIn() {
   return (
     <>
       <Helmet>
-        <title>Stockastic&apos;23 | Sign In</title>
+        <title>Stockastic&apos;24 | Sign In</title>
         <link rel='icon' type='image/svg+xml' href='/stockastic_logo.svg' />
         <meta name='description' content="Stockastic'23 SignIn Page" />
       </Helmet>
@@ -44,25 +44,38 @@ function SignIn() {
           validationSchema={schema}
           initialValues={{ email: '', password: '' }}
           onSubmit={async (values) => {
+
             setSigningIn(true)
+
             await axios
               .post(
-                `${import.meta.env.VITE_NEXT_PUBLIC_SERVER_URL}/auth/login`,
-                values
+                `${import.meta.env.VITE_BACKEND}/auth/login`,
+                values,
+                {
+                  withCredentials: true
+                }
+
               )
               .then((e) => {
-                const status = e.data.status
-                if (status === 'false') {
-                  setSuccessSnack(false)
-                  showSnackbar(e.data.err, 1500)
-                } else {
+                console.log(e)
+                const status = e.status
+                
+                if (status === 200) {
                   setSuccessSnack(true)
                   showSnackbar('Successful ! Logging In', 1500)
-                  localStorage.setItem('jwt', e.data.token)
-                  localStorage.setItem('name', e.data.data.name)
+                  // localStorage.setItem('jwt', e.data.token)
+                 
+                  // const jwt = Cookies.get('jwt');
+                  // console.log(jwt)
+                 
+                  localStorage.setItem('name', e.data.name)
                   setTimeout(() => {
                     navigate('/')
                   }, 1000)
+                }
+                else {
+                  setSuccessSnack(false)
+                  showSnackbar(e.data.err, 1500)
                 }
               })
               .catch((e) => {
@@ -89,71 +102,70 @@ function SignIn() {
             handleBlur,
             handleSubmit,
           }) => (
-<>
-            <button className='fixed top-10 left-10' onClick={() => navigate('/')}>
-                  <img className='w-22' src='stockastic_logo.svg' alt='Logo' />
-                </button>
-            <div className='login flex items-center justify-center md:w-[40vw] w-[60vw] h-[100%]'>
-            
-              <div className='form w-full text-center'>
-                
+            <>
+              <button className='fixed top-10 left-10' onClick={() => navigate('/')}>
+                <img className='w-22' src='stockastic_logo.svg' alt='Logo' />
+              </button>
+              <div className='login flex items-center justify-center md:w-[40vw] w-[60vw] h-[100%]'>
 
-                <form noValidate onSubmit={handleSubmit}>
-                  <span className=' w-full block font-[1000] text-2xl mb-3'>
-                    Sign In
-                  </span>
-                  <span className='block light'>Welcome to Stockastic</span>
-                  <input
-                    type='email'
-                    name='email'
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    value={values.email}
-                    placeholder='Enter VIT Email ID'
-                    className='form-control inp_text p-[10px] text-[14px] rounded-xl mt-[50px] mb-[15px] bg-[#1E1B1E] mx-[10%] w-[80%]'
-                    id='email'
-                  />
-                  <p className='error mb-[10px] text-left text-red-500 text-[12px] ms-[10%] mt-[-5px]'>
-                    {errors.email && touched.email && errors.email}
-                  </p>
-                  {/* Password */}
-                  <input
-                    type='password'
-                    name='password'
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    value={values.password}
-                    placeholder='Enter password'
-                    className='form-control p-[10px] text-[14px] rounded-xl bg-[#1E1B1E] mx-[10%] w-[80%] mb-[15px]'
-                  />
-                  <p className='error text-left text-red-500 text-[12px] ms-[10%] mt-[-5px]'>
-                    {errors.password && touched.password && errors.password}
-                  </p>
+                <div className='form w-full text-center'>
 
-                  {/* Forgot Password */}
-                  <div className='justify-end flex'>
-                    <a
-                      className='w-fit mr-[10%] text-sky-500 hover:text-sky-300 mb-[10px]  text-[15px]'
-                      href='https://stockastic.dreammerchantsvit.com/forgotpassword'
+
+                  <form noValidate onSubmit={handleSubmit}>
+                    <span className=' w-full block font-[1000] text-2xl mb-3'>
+                      Sign In
+                    </span>
+                    <span className='block light'>Welcome to Stockastic</span>
+                    <input
+                      type='email'
+                      name='email'
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.email}
+                      placeholder='Enter VIT Email ID'
+                      className='form-control inp_text p-[10px] text-[14px] rounded-xl mt-[50px] mb-[15px] bg-[#1E1B1E] mx-[10%] w-[80%]'
+                      id='email'
+                    />
+                    <p className='error mb-[10px] text-left text-red-500 text-[12px] ms-[10%] mt-[-5px]'>
+                      {errors.email && touched.email && errors.email}
+                    </p>
+                    {/* Password */}
+                    <input
+                      type='password'
+                      name='password'
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.password}
+                      placeholder='Enter password'
+                      className='form-control p-[10px] text-[14px] rounded-xl bg-[#1E1B1E] mx-[10%] w-[80%] mb-[15px]'
+                    />
+                    <p className='error text-left text-red-500 text-[12px] ms-[10%] mt-[-5px]'>
+                      {errors.password && touched.password && errors.password}
+                    </p>
+
+                    {/* Forgot Password */}
+                    <div className='justify-end flex'>
+                      <a
+                        className='w-fit mr-[10%] text-sky-500 hover:text-sky-300 mb-[10px]  text-[15px]'
+                        href='https://stockastic.dreammerchantsvit.com/forgotpassword'
+                      >
+                        Forgot password?
+                      </a>
+                    </div>
+
+                    {/* Buttons */}
+                    <button
+                      type='submit'
+                      className={`mx-[10%] w-[50%] px-4 py-3 rounded-xl mb-6 hover:opacity-75 ${signingIn ? 'bg-[#7353BA] opacity-75' : 'bg-[#7353BA]'
+                        }`}
+                      disabled={signingIn}
                     >
-                      Forgot password?
-                    </a>
-                  </div>
+                      {signingIn ? 'Signing In...' : 'Sign In'}
+                    </button>
+                  </form>
 
-                  {/* Buttons */}
-                  <button
-                    type='submit'
-                    className={`mx-[10%] w-[50%] px-4 py-3 rounded-xl mb-6 hover:opacity-75 ${
-                      signingIn ? 'bg-[#7353BA] opacity-75' : 'bg-[#7353BA]'
-                    }`}
-                    disabled={signingIn}
-                  >
-                    {signingIn ? 'Signing In...' : 'Sign In'}
-                  </button>
-                </form>
-              
+                </div>
               </div>
-            </div>
             </>
           )}
         </Formik>

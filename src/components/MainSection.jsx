@@ -3,7 +3,7 @@ import Stock from './Stock'
 import axios from 'axios'
 
 import { useNavigate } from 'react-router'
-
+import Cookies from 'js-cookie'
 import Loader from './Loader'
 
 const MainSection = () => {
@@ -33,32 +33,14 @@ const MainSection = () => {
   }
 
   useEffect(() => {
-    async function checkLogin() {
-
-      if (localStorage.getItem('jwt') === null) {
-        navigate('/SignIn')
-        return
-      }
-
-      await axios
-        .get(`${import.meta.env.VITE_NEXT_PUBLIC_SERVER_URL}/auth/me`, {
-          headers: {
-            Authorization: 'Bearer ' + localStorage.getItem('jwt'),
-          },
-        })
-        .then((e) => {
-          console.log(e)
-          return
-        })
-        .catch((e) => {
-          console.log(e)
-          alert('There was some error logging in. Please login again.')
-          localStorage.removeItem('jwt')
-          navigate('/SignIn')
-        })
+    if (Cookies.get('jwt') === null) {
+      navigate('/SignIn')
+      console.log(jwt)
+      return
     }
-    checkLogin()
-  }, [])
+
+  }
+    , [])
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -70,10 +52,10 @@ const MainSection = () => {
     async function getStocks() {
       await axios
         .get(
-          `${import.meta.env.VITE_NEXT_PUBLIC_SERVER_URL}/stockastic/company`,
+          `${import.meta.env.VITE_BACKEND}/stockastic/company`,
           {
             headers: {
-              Authorization: 'Bearer ' + localStorage.getItem('jwt'),
+              Authorization: 'Bearer ' + Cookies.get('jwt'),
             },
           }
         )
@@ -94,9 +76,9 @@ const MainSection = () => {
 
     async function getWallet() {
       await axios
-        .get(`${import.meta.env.VITE_NEXT_PUBLIC_SERVER_URL}/team`, {
+        .get(`${import.meta.env.VITE_BACKEND}/team`, {
           headers: {
-            Authorization: 'Bearer ' + localStorage.getItem('jwt'),
+            Authorization: 'Bearer ' + Cookies.get('jwt'),
           },
         })
         .then((e) => {
@@ -110,7 +92,7 @@ const MainSection = () => {
         })
         .catch((e) => {
           if (e.response.data.message === 'No team found') {
-            localStorage.removeItem('jwt')
+            // localStorage.removeItem('jwt')
             alert("No team found. Cannot access the portal.")
             navigate('/SignIn')
             setIsLoading(true)
