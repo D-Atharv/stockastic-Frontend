@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import './styles/MyPortfolio.css'
 import axios from 'axios'
+import Cookies from 'js-cookie';
+
 
 const Person = (props) => {
   return (
@@ -23,11 +25,13 @@ const MyTeam = (props) => {
   useEffect(() => {
     async function getTeam() {
       await axios
-        .get(`${import.meta.env.VITE_NEXT_PUBLIC_SERVER_URL}/team`, {
-          headers: {
-            Authorization: 'Bearer ' + localStorage.getItem('jwt'),
-          },
-        })
+        // .get(`${import.meta.env.VITE_NEXT_PUBLIC_SERVER_URL}/team`,
+        .get(`http://localhost:8000/team`,
+          {
+            headers: {
+              Authorization: 'Bearer ' + Cookies.get('jwt'),
+            },
+          })
         .then((e) => {
           const status = e.data.status
           if (status === 'fail') {
@@ -38,16 +42,18 @@ const MyTeam = (props) => {
           }
           return
         })
-        .catch((e) => {})
+        .catch((e) => { })
     }
 
     async function getTotal() {
       await axios
-        .get(`${import.meta.env.VITE_NEXT_PUBLIC_SERVER_URL}/total`, {
-          headers: {
-            Authorization: 'Bearer ' + localStorage.getItem('jwt'),
-          },
-        })
+        // .get(`${import.meta.env.VITE_NEXT_PUBLIC_SERVER_URL}/total`,
+        .get(`http://localhost:8000/total`,
+          {
+            headers: {
+              Authorization: 'Bearer ' + Cookies.get('jwt'),
+            },
+          })
         .then((e) => {
           const status = e.data.status
           if (status === 'fail') {
@@ -58,7 +64,7 @@ const MyTeam = (props) => {
           }
           return
         })
-        .catch((e) => {})
+        .catch((e) => { })
     }
 
     getTeam()
@@ -90,19 +96,17 @@ const MyTeam = (props) => {
           </div>
 
           <div
-            className={`flex flex-row items-center justify-around mx-2 ${
-              walletChange == 0
-                ? 'bg=[#303030]'
-                : walletChange > 0
+            className={`flex flex-row items-center justify-around mx-2 ${walletChange == 0
+              ? 'bg=[#303030]'
+              : walletChange > 0
                 ? 'bg-[#3DB042]'
                 : 'bg-[#FF2235]'
-            } rounded-xl px-4 py-3`}
+              } rounded-xl px-4 py-3`}
           >
             <img
               src='./arrow.svg'
-              className={`w-1/3 transition-transform ${
-                walletChange >= 0 ? 'rotate-180' : ''
-              } ${walletChange == 0 ? 'hidden' : ''}`}
+              className={`w-1/3 transition-transform ${walletChange >= 0 ? 'rotate-180' : ''
+                } ${walletChange == 0 ? 'hidden' : ''}`}
             />
             <span className='px-1'>{walletChange.toFixed(4)}</span>
           </div>

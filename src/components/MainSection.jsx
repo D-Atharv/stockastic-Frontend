@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import Stock from './Stock'
 import axios from 'axios'
+import io from 'socket.io-client';
 
 import { useNavigate } from 'react-router'
 import Cookies from 'js-cookie'
 import Loader from './Loader'
+
+const socket = io(import.meta.env.VITE_NEXT_PUBLIC_SERVER_URL || 'http://localhost:8000');
 
 const MainSection = () => {
   const navigate = useNavigate()
@@ -49,65 +52,47 @@ const MainSection = () => {
       console.log(buyCounter)
     }, 60000)
 
-    async function getStocks() {
-      await axios
-        .get(
-          `${import.meta.env.VITE_BACKEND}/stockastic/company`,
-          {
-            headers: {
-              Authorization: 'Bearer ' + Cookies.get('jwt'),
-            },
-          }
-        )
-        .then((e) => {
-          const status = e.data.status
-          if (status === 'fail') {
-            alert(e.data.err)
-          } else {
-            setCompanies(e.data.companies)
-            setIsLoading(false)
-          }
-          return
-        })
-        .catch((e) => {
-          console.log(e)
-        })
-    }
 
+    // Example wallet fetch
     async function getWallet() {
-      await axios
-        .get(`${import.meta.env.VITE_BACKEND}/team`, {
+      try {
+        const response = await axios.get('http://localhost:8000/api/team', {
           headers: {
             Authorization: 'Bearer ' + Cookies.get('jwt'),
           },
-        })
-        .then((e) => {
-          const status = e.data.status
-          if (status === 'fail') {
-            alert(e.data.message)
-          } else {
-            setWalletBal(e.data.team.wallet)
-          }
-          return
-        })
-        .catch((e) => {
-          if (e.response.data.message === 'No team found') {
-            // localStorage.removeItem('jwt')
-            alert("No team found. Cannot access the portal.")
-            navigate('/SignIn')
-            setIsLoading(true)
-          }
-        })
+        });
+        const { status, team } = response.data;
+        if (status === 'fail') {
+          alert(response.data.message);
+        } else {
+          setWalletBal(team.wallet);
+        }
+      } catch (error) {
+        if (error.response.data.message === 'No team found') {
+          localStorage.removeItem('jwt');
+          alert('No team found. Cannot access the portal.');
+          navigate('/SignIn');
+          setIsLoading(true);
+        }
+      }
     }
 
-    getWallet()
-    getStocks()
+    getWallet();
 
+    socket.emit('fetchStocks');
+
+    socket.on('getStocks', (data) => {
+      if (data.status === 'fail') {
+        alert(data.err);
+      } else {
+        setCompanies(data.companies);
+        setIsLoading(false);
+      }
+    });
     return () => {
-      console.log('Clearing')
-      clearInterval(intervalId)
-    }
-  }, [buyCounter])
+      socket.off('getStocks');
+    };
+  }, []);
 
   return (
     <div className='mx-10 rounded-3xl my-10 h-full'>
@@ -139,7 +124,8 @@ const MainSection = () => {
             {companies.map((company, index) => (
               <Stock
                 index={index}
-                key={index}
+                // key={index}
+                key={company.id}
                 company={company}
                 showSnackbar={showSnackbar}
                 updateCounter={updateCounter}

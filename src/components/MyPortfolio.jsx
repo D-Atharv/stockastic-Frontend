@@ -3,6 +3,8 @@ import MyStocks from './MyStocks'
 import MyTeam from './MyTeam'
 import axios from 'axios'
 import Loader from './Loader'
+import Cookies from 'js-cookie';
+
 
 const MyPortfolio = () => {
   const [myStocks, setMyStocks] = useState([])
@@ -24,14 +26,13 @@ const MyPortfolio = () => {
     async function getMyStocks() {
       await axios
         .get(
-          `${
-            import.meta.env.VITE_NEXT_PUBLIC_SERVER_URL
-          }/stockastic/transaction/`,
+          // `${import.meta.env.VITE_NEXT_PUBLIC_SERVER_URL}/stockastic/transaction/`,
+          `http://localhost:8000/stockastic/transaction/`,
           {
             headers: {
-              Authorization: 'Bearer ' + localStorage.getItem('jwt'),
+              Authorization: 'Bearer ' + Cookies.get('jwt'),
             },
-          }
+          },
         )
         .then((e) => {
           const status = e.data.status
