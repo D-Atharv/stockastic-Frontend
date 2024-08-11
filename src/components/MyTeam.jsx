@@ -67,7 +67,7 @@ const MyTeam = () => {
         </div>
       </div>
 
-      <div className='px-5 py-5 flex flex-col items-center justify-around px-7 py-3 my-5 w-3/4 text-center rounded-xl bottomSection'>
+      <div className=' flex flex-col items-center justify-around px-7 py-3 my-5 w-3/4 text-center rounded-xl bottomSection'>
         <h1 className='mb-4 mt-2'>TOTAL AMOUNT</h1>
         <div className='flex flex-row items-center justify-between'>
           <div className='bg-white px-4 py-3 text-black rounded-xl'>
