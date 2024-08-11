@@ -1,55 +1,44 @@
-import React, { useEffect, useState } from 'react'
-import MyStocks from './MyStocks'
-import MyTeam from './MyTeam'
-import axios from 'axios'
-import Loader from './Loader'
-import Cookies from 'js-cookie';
+import React, { useEffect, useState } from 'react';
+import MyStocks from './MyStocks';
+import MyTeam from './MyTeam';
+import { useSocket } from '../context/SocketContext';
+import Loader from './Loader';
 
 const MyPortfolio = () => {
-  const [myStocks, setMyStocks] = useState([]); // Ensure initial value is an empty array
+  const socket = useSocket();
+  const [myStocks, setMyStocks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sellCounter, setSellCounter] = useState(0);
 
   const updateCounter = () => {
     setSellCounter(sellCounter + 1);
-  }
+  };
 
   useEffect(() => {
+    if (!socket) return;
+
+    socket.emit('getHoldingsByTeam', 1);
+
+    socket.on('holdingsResponse', ({ status, holdings, err }) => {
+      if (status === 'fail') {
+        alert('Error: ' + err);
+      } else {
+        setMyStocks(holdings || []);
+        setIsLoading(false);
+      }
+    });
+
     const intervalId = setInterval(() => {
       console.log('Refreshing data');
       updateCounter();
     }, 60000);
 
-    async function getMyStocks() {
-      try {
-        const response = await axios.get(
-          `http://localhost:8000/stockastic/holdings/`,
-          {
-            headers: {
-              Authorization: 'Bearer ' + Cookies.get('jwt'),
-            },
-          }
-        );
-
-        const { status, holdings } = response.data;
-        if (status === 'fail') {
-          alert('Error: ' + response.data.err);
-        } else {
-          setMyStocks(holdings || []); // Ensure holdings is an array
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    }
-
-    getMyStocks();
-
     return () => {
       console.log('Clearing');
       clearInterval(intervalId);
+      socket.off('holdingsResponse');
     };
-  }, [sellCounter]);
+  }, [socket, sellCounter]);
 
   const showSnackbar = (message, duration) => {
     var snackbar = document.getElementById('snackbar');
@@ -62,7 +51,7 @@ const MyPortfolio = () => {
         snackbar.classList.add('invisible');
       }, duration);
     }
-  }
+  };
 
   return (
     <>
@@ -115,6 +104,7 @@ const MyPortfolio = () => {
       </div>
     </>
   );
-}
+};
 
 export default MyPortfolio;
+

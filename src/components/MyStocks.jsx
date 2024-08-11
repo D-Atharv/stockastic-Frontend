@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import CountTracker from './CountTracker';
-import Cookies from 'js-cookie';
-
+import { useSocket } from '../context/SocketContext';
 
 const MyStocks = (props) => {
+  const socket = useSocket();
   const [currentQuantity, setCurrentQuantity] = useState(0);
 
   const handleSell = () => {
@@ -12,50 +11,26 @@ const MyStocks = (props) => {
   };
 
   const sellStock = async () => {
-    try {
-      console.log('Attempting to sell stock with quantity:', currentQuantity);
-      console.log('Authorization Token:', Cookies.get('jwt'));
-      console.log('Stock ID:', props.stock.stock.id);
+    console.log('Attempting to sell stock with quantity:', currentQuantity);
 
-      const response = await axios.post(
-        'http://localhost:8000/stockastic/holdings/',
-        {
-          type: 'sell',
-          company: props.stock.stock.id,
-          volume: currentQuantity,
-        },
-        {
-          headers: {
-            Authorization: 'Bearer ' + Cookies.get('jwt'),
-          },
-        }
-      );
+    socket.emit('sellStock', {
+      type: 'sell',
+      company: props.stock.stock.id,
+      volume: currentQuantity,
+      userId: 1, // Hardcoded for now, replace with actual user ID if necessary
+    });
 
-      console.log('Sell response:', response);
-
-
-      console.log({
-        type: 'sell',
-        company: props.stock.stock.id,
-        volume: currentQuantity,
-      })
-
-      if (response.data.status.toLowerCase() === 'fail') {
-        return;
+    socket.on('sellResponse', (response) => {
+      if (response.status.toLowerCase() === 'fail') {
+        console.log(response.message);
+        props.showSnackbar('Error selling stock', 5000);
+      } else {
+        props.showSnackbar(`You sold ${currentQuantity} stock(s) of ${props.stock.stock.stockName}`, 5000);
+        setCurrentQuantity(0);
+        props.updateCounter();
       }
-
-      props.showSnackbar(
-        `You sold ${currentQuantity} stock(s) of ${props.stock.stock.stockName}`,
-        5000
-      );
-      setCurrentQuantity(0);
-      props.updateCounter();
-    } catch (error) {
-      console.error('Error selling stock:', error);
-      props.showSnackbar('Error selling stock', 5000);
-    }
+    });
   };
-
 
   return (
     <div>
@@ -90,8 +65,6 @@ const MyStocks = (props) => {
 };
 
 export default MyStocks;
-
-
 
 
 
