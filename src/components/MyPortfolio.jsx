@@ -5,65 +5,63 @@ import axios from 'axios'
 import Loader from './Loader'
 import Cookies from 'js-cookie';
 
-
 const MyPortfolio = () => {
-  const [myStocks, setMyStocks] = useState([])
-
-  const [isLoading, setIsLoading] = useState(true)
-
-  const [sellCounter, setSellCounter] = useState(0)
+  const [myStocks, setMyStocks] = useState([]); // Ensure initial value is an empty array
+  const [isLoading, setIsLoading] = useState(true);
+  const [sellCounter, setSellCounter] = useState(0);
 
   const updateCounter = () => {
-    setSellCounter(sellCounter + 1)
+    setSellCounter(sellCounter + 1);
   }
 
   useEffect(() => {
     const intervalId = setInterval(() => {
-      console.log('Refreshing data')
-      updateCounter()
-    }, 60000)
+      console.log('Refreshing data');
+      updateCounter();
+    }, 60000);
 
     async function getMyStocks() {
-      await axios
-        .get(
-          // `${import.meta.env.VITE_NEXT_PUBLIC_SERVER_URL}/stockastic/transaction/`,
-          `http://localhost:8000/stockastic/transaction/`,
+      try {
+        const response = await axios.get(
+          `http://localhost:8000/stockastic/holdings/`,
           {
             headers: {
               Authorization: 'Bearer ' + Cookies.get('jwt'),
             },
-          },
-        )
-        .then((e) => {
-          const status = e.data.status
-          if (status === 'fail') {
-            alert(e.data.err)
-          } else {
-            setMyStocks(e.data.transactions)
-            setIsLoading(false)
           }
-          return
-        })
-        .catch((e) => {
-          console.log(e)
-        })
+        );
+
+        const { status, holdings } = response.data;
+        if (status === 'fail') {
+          alert('Error: ' + response.data.err);
+        } else {
+          setMyStocks(holdings || []); // Ensure holdings is an array
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.log(error);
+      }
     }
-    getMyStocks()
+
+    getMyStocks();
+
     return () => {
-      console.log('Clearing')
-      clearInterval(intervalId)
-    }
-  }, [sellCounter])
+      console.log('Clearing');
+      clearInterval(intervalId);
+    };
+  }, [sellCounter]);
 
   const showSnackbar = (message, duration) => {
-    var snackbar = document.getElementById('snackbar')
-    snackbar.innerHTML = message
-    snackbar.classList.add('visible')
-    snackbar.classList.remove('invisible')
-    setTimeout(function () {
-      snackbar.classList.remove('visible')
-      snackbar.classList.add('invisible')
-    }, duration)
+    var snackbar = document.getElementById('snackbar');
+    if (snackbar) {
+      snackbar.innerHTML = message;
+      snackbar.classList.add('visible');
+      snackbar.classList.remove('invisible');
+      setTimeout(function () {
+        snackbar.classList.remove('visible');
+        snackbar.classList.add('invisible');
+      }, duration);
+    }
   }
 
   return (
@@ -79,11 +77,9 @@ const MyPortfolio = () => {
             <h1 className='flex-2'>Sell</h1>
           </div>
           {isLoading ? (
-            <>
-              <div className='h-full w-full flex justify-center items-center p-12'>
-                <Loader />
-              </div>
-            </>
+            <div className='h-full w-full flex justify-center items-center p-12'>
+              <Loader />
+            </div>
           ) : (
             <>
               <div
@@ -96,31 +92,29 @@ const MyPortfolio = () => {
                 Snackbar message here.
               </div>
               {myStocks.map((stock, index) => {
-                if (stock.totalVolume > 0) {
-                  console.log(stock)
-                  // totalAmount += stock.totalVolume * stock.company.price
-                  console.log(stock)
+                if (stock.quantity > 0) {
                   return (
                     <MyStocks
                       key={index}
                       index={index}
                       stock={stock}
-                      stock_id={stock.company._id}
+                      stock_id={stock.stock.id}
                       showSnackbar={showSnackbar}
                       updateCounter={updateCounter}
                     />
-                  )
+                  );
                 }
+                return null;
               })}
             </>
           )}
         </div>
-        <div className='flex h-full self-start mx-10 rounded-3xl my-10 w-[40%] '>
+        <div className='flex h-full self-start mx-10 rounded-3xl my-10 w-[40%]'>
           <MyTeam sellCounter={sellCounter} />
         </div>
       </div>
     </>
-  )
+  );
 }
 
-export default MyPortfolio
+export default MyPortfolio;

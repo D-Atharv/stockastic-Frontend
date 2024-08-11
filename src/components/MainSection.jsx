@@ -1,98 +1,74 @@
-import React, { useEffect, useState } from 'react'
-import Stock from './Stock'
-import axios from 'axios'
-import io from 'socket.io-client';
-
-import { useNavigate } from 'react-router'
-import Cookies from 'js-cookie'
-import Loader from './Loader'
-
-const socket = io(import.meta.env.VITE_NEXT_PUBLIC_SERVER_URL || 'http://localhost:8000');
+import React, { useEffect, useState } from 'react';
+import Stock from './Stock';
+import Loader from './Loader';
+import Cookies from 'js-cookie';
+import { useNavigate } from 'react-router';
+import { useSocket } from '../context/SocketContext';
 
 const MainSection = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const socket = useSocket();
 
-  const [companies, setCompanies] = useState([])
-
-  const [walletBal, setWalletBal] = useState(0)
-
-  const [isLoading, setIsLoading] = useState(true)
-
-  const [buyCounter, setBuyCounter] = useState(0)
+  const [companies, setCompanies] = useState([]);
+  const [walletBal, setWalletBal] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [buyCounter, setBuyCounter] = useState(0);
 
   const updateCounter = () => {
-    setBuyCounter(buyCounter + 1)
-  }
+    setBuyCounter(buyCounter + 1);
+  };
 
   const showSnackbar = (message, duration) => {
-    var snackbar = document.getElementById('snackbar')
-    snackbar.innerHTML = message
-    snackbar.classList.add('visible')
-    snackbar.classList.remove('invisible')
-    setTimeout(function () {
-      snackbar.classList.remove('visible')
-      snackbar.classList.add('invisible')
-    }, duration)
-  }
-
-  useEffect(() => {
-    if (Cookies.get('jwt') === null) {
-      navigate('/SignIn')
-      console.log(jwt)
-      return
+    const snackbar = document.getElementById('snackbar');
+    if (snackbar) {
+      snackbar.innerHTML = message;
+      snackbar.classList.add('visible');
+      snackbar.classList.remove('invisible');
+      setTimeout(() => {
+        snackbar.classList.remove('visible');
+        snackbar.classList.add('invisible');
+      }, duration);
     }
-
-  }
-    , [])
+  };
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      console.log('Refreshing data')
-      updateCounter()
-      console.log(buyCounter)
-    }, 60000)
+    if (!Cookies.get('jwt')) {
+      navigate('/SignIn');
+      return;
+    }
+  }, [navigate]);
 
-
-    // Example wallet fetch
-    async function getWallet() {
-      try {
-        const response = await axios.get('http://localhost:8000/api/team', {
-          headers: {
-            Authorization: 'Bearer ' + Cookies.get('jwt'),
-          },
-        });
-        const { status, team } = response.data;
-        if (status === 'fail') {
-          alert(response.data.message);
-        } else {
-          setWalletBal(team.wallet);
-        }
-      } catch (error) {
-        if (error.response.data.message === 'No team found') {
-          localStorage.removeItem('jwt');
-          alert('No team found. Cannot access the portal.');
-          navigate('/SignIn');
-          setIsLoading(true);
-        }
+  useEffect(() => {
+    const handleFetchWallet = (data) => {
+      if (data.status === 'success') {
+        setWalletBal(data.balance);
+      } else {
+        alert(data.message);
+        Cookies.remove('jwt');
+        navigate('/SignIn');
       }
-    }
+    };
 
-    getWallet();
-
-    socket.emit('fetchStocks');
-
-    socket.on('getStocks', (data) => {
+    const handleStocksUpdate = (data) => {
       if (data.status === 'fail') {
         alert(data.err);
       } else {
         setCompanies(data.companies);
         setIsLoading(false);
       }
-    });
-    return () => {
-      socket.off('getStocks');
     };
-  }, []);
+
+    socket.emit('fetchWallet', Cookies.get('userId'));
+    socket.emit('fetchStocks');
+
+    socket.on('walletBalance', handleFetchWallet);
+    socket.on('getStocks', handleStocksUpdate);
+
+    return () => {
+      socket.off('walletBalance', handleFetchWallet);
+      socket.off('getStocks', handleStocksUpdate);
+    };
+  }, [socket, navigate, buyCounter]);
 
   return (
     <div className='mx-10 rounded-3xl my-10 h-full'>
@@ -113,9 +89,7 @@ const MainSection = () => {
         <>
           <div
             id='snackbar'
-            className={
-              'w-fit h-fit bg-green-400 border-green-800 text-black-700 border px-4 py-3 rounded transition invisible fixed bottom-4 left-4'
-            }
+            className='w-fit h-fit bg-green-400 border-green-800 text-black-700 border px-4 py-3 rounded transition invisible fixed bottom-4 left-4'
             role='alert'
           >
             Snackbar message here.
@@ -123,8 +97,6 @@ const MainSection = () => {
           <div className='bg-[#FE45RG] px-5 py-5 flex flex-col justify-between'>
             {companies.map((company, index) => (
               <Stock
-                index={index}
-                // key={index}
                 key={company.id}
                 company={company}
                 showSnackbar={showSnackbar}
@@ -135,7 +107,7 @@ const MainSection = () => {
         </>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default MainSection
+export default MainSection;

@@ -1,119 +1,88 @@
-import React, { useEffect, useState } from 'react'
-import './styles/MyPortfolio.css'
-import axios from 'axios'
+import React, { useEffect, useState } from 'react';
+import './styles/MyPortfolio.css';
+import { useSocket } from '../context/SocketContext';
 import Cookies from 'js-cookie';
 
+const Person = ({ member }) => (
+  <div className='px-3 py-1 flex flex-row items-center justify-around bg-[#D9D9D9] rounded-xl my-3 text-black'>
+    <img src='/person1.svg' className='w-[40px]' alt='Person' />
+    <p>{member.name}</p>
+  </div>
+);
 
-const Person = (props) => {
-  return (
-    <div>
-      <div className='px-3 py-1 flex flex-row items-center justify-around bg-[#D9D9D9] rounded-xl my-3 text-black'>
-        <img src='/person1.svg' className='w-[40px]' />
-        <p>{props.member.name}</p>
-      </div>
-    </div>
-  )
-}
-
-const MyTeam = (props) => {
-  const [teamName, setTeamName] = useState('')
-  const [teamMembers, setTeamMembers] = useState([])
-
-  const [walletAmount, setWalletAmount] = useState(0)
-  const [walletChange, setWalletChange] = useState(0)
+const MyTeam = () => {
+  const [teamName, setTeamName] = useState('');
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [walletAmount, setWalletAmount] = useState(0);
+  const [walletChange, setWalletChange] = useState(0);
+  const socket = useSocket();
 
   useEffect(() => {
-    async function getTeam() {
-      await axios
-        // .get(`${import.meta.env.VITE_NEXT_PUBLIC_SERVER_URL}/team`,
-        .get(`http://localhost:8000/team`,
-          {
-            headers: {
-              Authorization: 'Bearer ' + Cookies.get('jwt'),
-            },
-          })
-        .then((e) => {
-          const status = e.data.status
-          if (status === 'fail') {
-            alert(e.data.err)
-          } else {
-            setTeamName(e.data.team.name)
-            setTeamMembers(e.data.team.members)
-          }
-          return
-        })
-        .catch((e) => { })
-    }
+    if (!socket) return;
 
-    async function getTotal() {
-      await axios
-        // .get(`${import.meta.env.VITE_NEXT_PUBLIC_SERVER_URL}/total`,
-        .get(`http://localhost:8000/total`,
-          {
-            headers: {
-              Authorization: 'Bearer ' + Cookies.get('jwt'),
-            },
-          })
-        .then((e) => {
-          const status = e.data.status
-          if (status === 'fail') {
-            alert(e.data.err)
-          } else {
-            setWalletAmount(e.data.total)
-            setWalletChange(e.data.percent)
-          }
-          return
-        })
-        .catch((e) => { })
-    }
+    const userId = parseInt(Cookies.get('userId'), 10);
 
-    getTeam()
-    getTotal()
-    return
-  }, [props.sellCounter])
+    socket.emit('getTeam', userId);
+    socket.emit('getTotal', userId);
+
+    socket.on('teamData', (data) => {
+      if (data.status === 'success') {
+        setTeamName(data.team.name);
+        setTeamMembers(data.team.members);
+      } else {
+        console.error(data.message);
+      }
+    });
+
+    socket.on('totalData', (data) => {
+      if (data.status === 'success') {
+        setWalletAmount(data.total);
+        setWalletChange(data.percent);
+      } else {
+        console.error(data.message);
+      }
+    });
+
+    return () => {
+      socket.off('teamData');
+      socket.off('totalData');
+    };
+  }, [socket]);
 
   return (
     <div className='bg-[#1E1B1E] rounded-3xl flex flex-col items-center justify-around py-5 font-montaga text-xl text-white'>
       <div className='bg-[#303030] px-7 py-3 my-5 w-3/4 text-center rounded-xl'>
-        <h1>
-          <span>{teamName}</span>
-        </h1>
+        <h1><span>{teamName}</span></h1>
       </div>
 
       <div className='bg-[#303030] px-7 py-3 my-5 w-3/4 text-center rounded-xl'>
         <div>
-          {teamMembers.map((member, index) => {
-            return <Person key={index} member={member} />
-          })}
+          {teamMembers.length > 0 ? (
+            teamMembers.map((member) => (
+              <Person key={member.id} member={member} />
+            ))
+          ) : (
+            <p>No team members found.</p>
+          )}
         </div>
       </div>
 
       <div className='px-5 py-5 flex flex-col items-center justify-around px-7 py-3 my-5 w-3/4 text-center rounded-xl bottomSection'>
         <h1 className='mb-4 mt-2'>TOTAL AMOUNT</h1>
         <div className='flex flex-row items-center justify-between'>
-          <div className='bg-white px-4 py-3 text-black rounded-xl mx-2'>
-            {walletAmount.toFixed(2)}
+          <div className='bg-white px-4 py-3 text-black rounded-xl'>
+            <h1>${walletAmount.toFixed(2)}</h1>
           </div>
-
-          <div
-            className={`flex flex-row items-center justify-around mx-2 ${walletChange == 0
-              ? 'bg=[#303030]'
-              : walletChange > 0
-                ? 'bg-[#3DB042]'
-                : 'bg-[#FF2235]'
-              } rounded-xl px-4 py-3`}
-          >
-            <img
-              src='./arrow.svg'
-              className={`w-1/3 transition-transform ${walletChange >= 0 ? 'rotate-180' : ''
-                } ${walletChange == 0 ? 'hidden' : ''}`}
-            />
-            <span className='px-1'>{walletChange.toFixed(4)}</span>
-          </div>
+          <p>{walletChange.toFixed(2)}%</p>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default MyTeam
+export default MyTeam;
+
+
+
+
+

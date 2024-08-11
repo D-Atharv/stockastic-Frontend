@@ -1,16 +1,18 @@
-// SocketContext.js
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import io from 'socket.io-client';
 
-const SocketContext = createContext();
-
-export const useSocket = () => useContext(SocketContext);
+const SocketContext = createContext(null);
 
 export const SocketProvider = ({ children }) => {
-    const socket = useMemo(() => {
-        return io('http://localhost:8000', {
-            withCredentials: true,
-        });
+    const [socket, setSocket] = useState(null);
+
+    useEffect(() => {
+        const socketInstance = io(import.meta.env.VITE_NEXT_PUBLIC_SERVER_URL || 'http://localhost:8000');
+        setSocket(socketInstance);
+
+        return () => {
+            socketInstance.disconnect();
+        };
     }, []);
 
     return (
@@ -18,4 +20,8 @@ export const SocketProvider = ({ children }) => {
             {children}
         </SocketContext.Provider>
     );
+};
+
+export const useSocket = () => {
+    return useContext(SocketContext);
 };
