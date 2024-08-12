@@ -8,9 +8,15 @@ const MyStocks = (props) => {
 
   const handleSell = () => {
     sellStock();
+    socket.emit('getTotal', userId); // Re-fetch the total amount after selling
   };
 
   const sellStock = async () => {
+    if (currentQuantity === 0) {
+      props.showSnackbar('Please select a quantity greater than 0', 5000);
+      return;
+    }
+
     console.log('Attempting to sell stock with quantity:', currentQuantity);
 
     socket.emit('sellStock', {
@@ -31,6 +37,7 @@ const MyStocks = (props) => {
       }
     });
   };
+
 
   return (
     <div>
@@ -59,6 +66,14 @@ const MyStocks = (props) => {
         >
           SELL
         </button>
+
+        {/* <button
+          className='font-montaga py-2 px-5 rounded-xl bg-[#FF2235] w-[100px] mx-1 disabled:opacity-50 disabled:cursor-not-allowed'
+          onClick={handleSell}
+          disabled={currentQuantity === 0} // Disable button when quantity is 0
+        >
+          SELL
+        </button> */}
       </div>
     </div>
   );

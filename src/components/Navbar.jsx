@@ -1,6 +1,8 @@
 import React from 'react'
 
 import { useNavigate } from 'react-router'
+import Cookies from 'js-cookie';
+
 
 const Navbar = () => {
   const navigate = useNavigate()
@@ -21,7 +23,8 @@ const Navbar = () => {
         <button
           className='font-montaga bg-purple-700 text-white py-2 px-5 rounded-full  h-[40px] ml-4'
           onClick={() => {
-            localStorage.removeItem('jwt')
+            // localStorage.removeItem('jwt')
+            Cookies.remove('jwt');
             navigate('/SignIn')
           }}
         >

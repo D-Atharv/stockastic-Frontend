@@ -10,13 +10,14 @@ const Stock = ({ company, showSnackbar, updateCounter, index }) => {
   const [companyPrices, setCompanyPrices] = useState(company.prices);
 
   useEffect(() => {
+    console.log("Company Object:", company); // Debugging line to inspect the company object
+
     const buyResponseHandler = (data) => {
       console.log('Received buyResponse:', data); // Debugging line
       if (data.status.toLowerCase() === 'fail') {
         showSnackbar(data.message, 5000);
         return;
       }
-      // showSnackbar(`You bought ${currentQuantity} stock(s) of ${company.name}`, 5000);
       showSnackbar(`You bought ${currentQuantity} stock(s) of ${company.stockName}`, 5000);
       setParticipantStocks(participantStocks - currentQuantity);
       setCompanyPrices(data.updatedPrice);
@@ -30,7 +31,6 @@ const Stock = ({ company, showSnackbar, updateCounter, index }) => {
     return () => {
       socket.off('buyResponse', buyResponseHandler);
     };
-    // }, [currentQuantity, participantStocks, company.name, company.id, index, updateCounter, socket]);
   }, [currentQuantity, participantStocks, company.stockName, company.id, index, updateCounter, socket]);
 
   const handleBuy = () => {

@@ -1,25 +1,34 @@
 const CounterButton = (props) => {
   const decreaseCount = () => {
-    if (props.currentQuantity > 0) {
-      props.setCurrentQuantity(props.currentQuantity - 1)
-    }
-  }
+    props.setCurrentQuantity((prevQuantity) => {
+      console.log("Decreasing: Current Quantity =", prevQuantity);
+      if (prevQuantity > 0) {
+        return prevQuantity - 1;
+      }
+      return prevQuantity;
+    });
+  };
 
   const increaseCount = () => {
-    // TODO: One team cannot buy more than 30% of any one share.
-    if (props.currentQuantity < props.volume) {
-      props.setCurrentQuantity(props.currentQuantity + 1)
-    }
-  }
+    props.setCurrentQuantity((prevQuantity) => {
+      console.log("Increasing: Current Quantity =", prevQuantity);
+      if (prevQuantity < props.volume) {
+        return prevQuantity + 1;
+      }
+      return prevQuantity;
+    });
+  };
 
   const handleInputChange = (e) => {
-    let newCount = parseInt(e.target.value)
+    let newCount = parseInt(e.target.value);
+    console.log("Input Change: New Count =", newCount);
     if (newCount > props.volume) {
-      newCount = props.volume
-      // return
+      newCount = props.volume;
     }
-    props.setCurrentQuantity(isNaN(newCount) ? 0 : newCount)
-  }
+    props.setCurrentQuantity(isNaN(newCount) ? 0 : newCount);
+  };
+
+  console.log("Rendering CounterButton: Current Quantity =", props.currentQuantity, "Volume =", props.volume);
 
   return (
     <div className='flex items-center text-montaga'>
@@ -42,7 +51,7 @@ const CounterButton = (props) => {
         +
       </button>
     </div>
-  )
-}
+  );
+};
 
-export default CounterButton
+export default CounterButton;
